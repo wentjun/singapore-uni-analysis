@@ -10,7 +10,6 @@ import { graphql, useStaticQuery } from 'gatsby';
 import React from 'react';
 import { Client as Styletron } from 'styletron-engine-atomic';
 import { DebugEngine, Provider as StyletronProvider } from 'styletron-react';
-import Header from './header';
 import './layout.css';
 
 const engine = new Styletron();
@@ -31,7 +30,6 @@ const Layout = ({ children }) => {
   return (
     <StyletronProvider value={engine} debug={debug} debugAfterHydration>
       <BaseProvider theme={LightTheme}>
-        <Header siteTitle={data.site.siteMetadata.title} />
         <div
           style={{
             margin: '0 auto',
@@ -40,14 +38,6 @@ const Layout = ({ children }) => {
           }}
         >
           <main>{children}</main>
-          <footer>
-            ©
-            {' '}
-            {new Date().getFullYear()}
-            , Built with
-            {' '}
-            <a href='https://www.gatsbyjs.org'>Gatsby</a>
-          </footer>
         </div>
       </BaseProvider>
 
