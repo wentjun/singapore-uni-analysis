@@ -1,11 +1,4 @@
-/**
- * Layout component that queries for data
- * with Gatsby's useStaticQuery component
- *
- * See: https://www.gatsbyjs.org/docs/use-static-query/
- */
-
-import { BaseProvider, LightTheme } from 'baseui';
+import { BaseProvider, LightTheme, styled } from 'baseui';
 import { graphql, useStaticQuery } from 'gatsby';
 import React from 'react';
 import { Client as Styletron } from 'styletron-engine-atomic';
@@ -15,6 +8,13 @@ import './layout.css';
 const engine = new Styletron();
 // eslint-disable-next-line no-void
 const debug = process.env.NODE_ENV === 'production' ? void 0 : new DebugEngine();
+
+const LayoutWrapper = styled('div', ({ $theme }) => ({
+  backgroundColor: $theme.colors.backgroundLightWarning,
+  margin: '0 auto',
+  maxWidth: 960,
+  padding: '0 1.0875rem 1.45rem',
+}));
 
 const Layout = ({ children }) => {
   const data = useStaticQuery(graphql`
@@ -30,17 +30,10 @@ const Layout = ({ children }) => {
   return (
     <StyletronProvider value={engine} debug={debug} debugAfterHydration>
       <BaseProvider theme={LightTheme}>
-        <div
-          style={{
-            margin: '0 auto',
-            maxWidth: 960,
-            padding: '0 1.0875rem 1.45rem',
-          }}
-        >
+        <LayoutWrapper>
           <main>{children}</main>
-        </div>
+        </LayoutWrapper>
       </BaseProvider>
-
     </StyletronProvider>
   );
 };

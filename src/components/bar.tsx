@@ -113,64 +113,116 @@ const Bar: React.FC = () => {
           .tickSizeOuter(0),
       );
 
-    svg
-      .append('g')
-      .attr('fill', theme.colors.accent300)
-      .selectAll('rect')
-      .data(nodes)
-      .join('rect')
-      .attr('x', x(0))
-      .attr('y', ({ course }): number => y(course) as number)
-      .attr('width', 0) // width will initially be 0
-      .attr('height', y.bandwidth());
+    const courseGroup = svg
+      .selectAll('g')
+      .data<Enrolment>(nodes)
+      .enter()
+      .append('g');
+      // .append('text')
+      // .text(({ enrolment }: Enrolment) => enrolment);
+
+    const courseUnit = courseGroup.append('rect');
+
+    const selection: d3.Selection<SVGElement, Enrolment, HTMLElement, any> = d3.selectAll('g');
+
+    // course label
+    selection
+      .append('text')
+      .text(({ course }: Enrolment) => course)
+      .attr('fill', 'gray')
+      .attr('class', 'city')
+      .attr('dx', -500);
+
+
+    // enrolment count label
+    selection
+      .append('text')
+      .text(({ enrolment }: Enrolment) => enrolment)
+      .attr('fill', '#fff')
+      .attr('class', 'enrolment')
+      .attr('dx', -500);
+
+    const spacing = 40;
+    const rows = 10;
+    const column = 8;
+
+    courseUnit
+      .transition()
+      .delay((_, i) => 10 * i)
+      .duration(500)
+      .attr('width', 20)
+      .attr('height', 20)
+      .attr('rx', 5)
+      .attr('ry', 5)
+      .attr('x', (_, i) => (i % column) * spacing)
+      .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing)
+      .attr('fill', theme.colors.primary600)
+      .attr('opacity', 1);
+
+    // svg
+    //   .append('g')
+    //   .attr('fill', theme.colors.accent300)
+    //   .selectAll('rect')
+    //   .data(nodes)
+    //   .join('g')
+    //   .attr('x', x(0))
+    //   .attr('y', ({ course }): number => y(course) as number)
+    //   .attr('width', 0) // width will initially be 0
+    //   .attr('height', y.bandwidth());
 
     /**
      * animates bars to full width
      */
-    svg
-      .selectAll('rect')
-      .transition()
-      .duration(800)
-      .attr('width', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))) - x(0))
-      .delay((_: Enrolment, i: number) => i * 100);
+    // svg
+    //   .selectAll('rect')
+    //   .transition()
+    //   .duration(800)
+    //   .attr('width', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))) - x(0))
+    //   .delay((_: Enrolment, i: number) => i * 100);
 
-    svg
-      .append('g')
-      .attr('fill', theme.colors.primaryB)
-      .attr('text-anchor', 'end')
-      .attr('font-size', 12)
-      .attr('class', 'enrolment-count')
-      .selectAll('text')
-      .data(nodes)
-      .join('text')
-      .attr('x', x(0)) // initial x position of text
-      .attr('y', ({ course }) => +(y(course) ?? 0) + y.bandwidth() / 2)
-      .attr('dy', '0.35em')
-      .attr('dx', -4)
-      .text(({ enrolment }) => enrolment)
-      .call((text) => text
-        .filter(({ enrolment }) => x(Number(enrolment.replace(/,/g, ''))) - x(0) < 20) // short bars
-        .attr('dx', +4)
-        .attr('fill', theme.colors.primaryA)
-        .attr('text-anchor', 'start'));
+    // svg
+    //   .append('g')
+    //   .attr('fill', theme.colors.primaryB)
+    //   .attr('text-anchor', 'end')
+    //   .attr('font-size', 12)
+    //   .attr('class', 'enrolment-count')
+    //   .selectAll('text')
+    //   .data(nodes)
+    //   .join('text')
+    //   .attr('x', x(0)) // initial x position of text
+    //   .attr('y', ({ course }) => +(y(course) ?? 0) + y.bandwidth() / 2)
+    //   .attr('dy', '0.35em')
+    //   .attr('dx', -4)
+    //   .text(({ enrolment }) => enrolment)
+    //   .call((text) => text
+    //     .filter(({ enrolment }) => x(Number(enrolment.replace(/,/g, ''))) - x(0) < 20) // short bars
+    //     .attr('dx', +4)
+    //     .attr('fill', theme.colors.primaryA)
+    //     .attr('text-anchor', 'start'));
 
     /**
      * animates text to final position
      */
-    svg
-      .selectAll('.enrolment-count text')
-      .transition()
-      .duration(800)
-      .attr('x', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))))
-      .delay((_: Enrolment, i: number) => i * 100);
+    // svg
+    //   .selectAll('.enrolment-count text')
+    //   .transition()
+    //   .duration(800)
+    //   .attr('x', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))))
+    //   .delay((_: Enrolment, i: number) => i * 100);
 
-    svg
-      .append('g')
-      .call(xAxis);
+    /**
+     * append x-axis
+     */
+    // svg
+    //   .append('g')
+    //   .call(xAxis);
 
-    svg
-      .append('g')
-      .call(yAxis);
+    /**
+     * append y-axis
+     */
+    // svg
+    //   .append('g')
+    //   .call(yAxis);
   }, []);
 
   // useEffect(() => {
