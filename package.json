@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/d3": "^5.7.2",
+    "@types/react-helmet": "^6.0.0",
     "@types/styletron-engine-atomic": "^1.1.0",
     "@types/styletron-react": "^5.0.2",
     "@types/styletron-standard": "^2.0.0",

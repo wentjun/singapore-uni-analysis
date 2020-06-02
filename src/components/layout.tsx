@@ -1,6 +1,5 @@
 import { BaseProvider, LightTheme, styled } from 'baseui';
-import { graphql, useStaticQuery } from 'gatsby';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Client as Styletron } from 'styletron-engine-atomic';
 import { DebugEngine, Provider as StyletronProvider } from 'styletron-react';
 import './layout.css';
@@ -11,31 +10,23 @@ const debug = process.env.NODE_ENV === 'production' ? void 0 : new DebugEngine()
 
 const LayoutWrapper = styled('div', ({ $theme }) => ({
   backgroundColor: $theme.colors.backgroundLightWarning,
+  boxSizing: 'border-box',
   margin: '0 auto',
-  maxWidth: 960,
-  padding: '0 1.0875rem 1.45rem',
+  padding: $theme.sizing.scale700,
 }));
 
-const Layout = ({ children }) => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          title
-        }
-      }
-    }
-  `);
+interface LayoutProps {
+  children: ReactNode;
+}
 
-  return (
-    <StyletronProvider value={engine} debug={debug} debugAfterHydration>
-      <BaseProvider theme={LightTheme}>
-        <LayoutWrapper>
-          <main>{children}</main>
-        </LayoutWrapper>
-      </BaseProvider>
-    </StyletronProvider>
-  );
-};
+const Layout: React.FC<LayoutProps> = ({ children }) => (
+  <StyletronProvider value={engine} debug={debug} debugAfterHydration>
+    <BaseProvider theme={LightTheme}>
+      <LayoutWrapper>
+        <main>{children}</main>
+      </LayoutWrapper>
+    </BaseProvider>
+  </StyletronProvider>
+);
 
 export default Layout;

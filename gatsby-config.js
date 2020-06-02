@@ -3,6 +3,7 @@ module.exports = {
     title: 'A visualisation of college majors in Singapore',
     description: 'A visualisation of college majors in Singapore',
     author: '@wentjun',
+    lang: 'en',
   },
   plugins: [
     'gatsby-plugin-react-helmet',

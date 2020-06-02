@@ -1,32 +1,17 @@
-import React, {
-  useEffect,
-  useRef,
-  useLayoutEffect,
-  useState,
-} from 'react';
-import * as d3 from 'd3';
 import { styled, useStyletron } from 'baseui';
-import { useStaticQuery, graphql } from 'gatsby';
+import * as d3 from 'd3';
+import React, {
+  useEffect, useLayoutEffect, useRef, useState,
+} from 'react';
+import { Enrolment } from '../shared/interfaces/enrolment.interface';
 
-
-interface Enrolment {
-  year: string;
-  sex: string;
-  course: string;
-  intake: string;
-  enrolment: string;
-  graduates: string;
-}
-
-interface EnrolmentQuery {
-  allEnrolmentCsv: {
-    nodes: Enrolment[];
-  }
+interface BarProps {
+  nodes: Enrolment[];
 }
 
 const BarChart = styled('div', () => ({
-  height: '100vh',
-  width: '75vw',
+  height: '100%',
+  width: '75%',
 }));
 
 const useWindowSize = () => {
@@ -42,31 +27,10 @@ const useWindowSize = () => {
   return size;
 };
 
-const Bar: React.FC = () => {
+const Bar: React.FC<BarProps> = ({ nodes }) => {
   const chartRef = useRef(null);
   const [, theme] = useStyletron();
-  // const [width, height] = useWindowSize();
-
-  const data = useStaticQuery<EnrolmentQuery>(graphql`
-    query ChartQuery {
-      allEnrolmentCsv(
-        filter: { 
-          year: { eq: "2018" }
-          sex: { eq: "MF" }
-        }
-      ) {
-        nodes {
-          course
-          enrolment
-          sex
-          graduates
-          id
-          intake
-          year
-        }
-      }
-    }
-  `);
+  // const [width, height] = useWindowSize()
 
   // d3.select(window)
   //   .on('resize', () => {
@@ -77,7 +41,6 @@ const Bar: React.FC = () => {
   //   });
 
   useEffect(() => {
-    const { allEnrolmentCsv: { nodes } } = data;
     const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
     const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     const margin = {
