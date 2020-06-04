@@ -5,8 +5,14 @@ import React, {
 } from 'react';
 import { Enrolment } from '../shared/interfaces/enrolment.interface';
 
-interface BarProps {
+interface VisualisationProps {
   nodes: Enrolment[];
+}
+
+interface EnrolmentNode extends Enrolment{
+  x: number;
+  y: number;
+  radius: number;
 }
 
 const BarChart = styled('div', () => ({
@@ -14,20 +20,7 @@ const BarChart = styled('div', () => ({
   width: '75%',
 }));
 
-const useWindowSize = () => {
-  const [size, setSize] = useState([0, 0]);
-  useLayoutEffect(() => {
-    const updateSize = () => {
-      setSize([window.innerWidth, window.innerHeight]);
-    };
-    window.addEventListener('resize', updateSize);
-    updateSize();
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
-  return size;
-};
-
-const Bar: React.FC<BarProps> = ({ nodes }) => {
+const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
   const chartRef = useRef(null);
   const [, theme] = useStyletron();
   // const [width, height] = useWindowSize()
@@ -76,22 +69,61 @@ const Bar: React.FC<BarProps> = ({ nodes }) => {
           .tickSizeOuter(0),
       );
 
+    const charge = (d) => (d.radius ** 2.0) * 0.01;
+    const forceStrength = 0.03;
+    const centre = { x: width / 2, y: height / 2 };
+
+    const createNodes = (rawData: Enrolment[]) => {
+      // use max size in the data as the max in the scale's domain
+      // note we have to ensure that size is a number
+      const maxSize = d3.max(rawData, ({ enrolment }) => +enrolment.replace(/,/g, ''));
+      if (!maxSize) {
+        return [];
+      }
+      // size bubbles based on area
+      const radiusScale = d3.scaleSqrt()
+        .domain([0, maxSize])
+        .range([0, 80]);
+
+      // use map() to convert raw data into node data
+      const myNodes = rawData.map((d) => ({
+        ...d,
+        radius: radiusScale(+d.enrolment.replace(/,/g, '')),
+        // size: +d.size,
+        x: Math.random() * 900,
+        y: Math.random() * 800,
+      }));
+
+      return myNodes;
+    };
+    const enrolmentNodes = createNodes(nodes);
+
+    const simulation = d3.forceSimulation()
+      .force('charge', d3.forceManyBody().strength(charge))
+      // .force('center', d3.forceCenter(centre.x, centre.y))
+      .force('x', d3.forceX().strength(forceStrength).x(centre.x))
+      .force('y', d3.forceY().strength(forceStrength).y(centre.y))
+      .force('collision', d3.forceCollide().radius((d) => d.radius + 1));
+    simulation.stop();
+
+
     const courseGroup = svg
       .selectAll('g')
-      .data<Enrolment>(nodes)
+      // .data<Enrolment>(nodes)
+      // .data(root.children as d3.HierarchyCircularNode<Enrolment>[])
+      .data(enrolmentNodes)
       .enter()
-      .append('g');
-      // .append('text')
-      // .text(({ enrolment }: Enrolment) => enrolment);
+      .append('g')
+      .attr('id', ({ id }) => id);
 
     const courseUnit = courseGroup.append('rect');
 
-    const selection: d3.Selection<SVGElement, Enrolment, HTMLElement, any> = d3.selectAll('g');
+    const selection: d3.Selection<d3.BaseType, EnrolmentNode, HTMLElement, any> = d3.selectAll('g');
 
     // course label
     selection
       .append('text')
-      .text(({ course }: Enrolment) => course)
+      .text(({ course }) => course)
       .attr('fill', 'gray')
       .attr('class', 'city')
       .attr('dx', -500);
@@ -100,7 +132,7 @@ const Bar: React.FC<BarProps> = ({ nodes }) => {
     // enrolment count label
     selection
       .append('text')
-      .text(({ enrolment }: Enrolment) => enrolment)
+      .text(({ enrolment }) => enrolment)
       .attr('fill', '#fff')
       .attr('class', 'enrolment')
       .attr('dx', -500);
@@ -109,19 +141,35 @@ const Bar: React.FC<BarProps> = ({ nodes }) => {
     const rows = 10;
     const column = 8;
 
-    courseUnit
-      .transition()
-      .delay((_, i) => 10 * i)
-      .duration(500)
-      .attr('width', 20)
-      .attr('height', 20)
-      .attr('rx', 5)
-      .attr('ry', 5)
-      .attr('x', (_, i) => (i % column) * spacing)
-      .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing)
+    const a = courseUnit
+      // .transition()
+      // .delay((_, i) => 10 * i)
+      // .duration(500)
+      // .attr('width', 20)
+      .attr('width', ({ radius }) => radius)
+      // .attr('height', 20)
+      .attr('height', ({ radius }) => radius)
+      // .attr('rx', 5)
+      .attr('rx', ({ radius }) => radius)
+      // .attr('ry', 5)
+      .attr('ry', ({ radius }) => radius)
+      // .attr('r', ({ r }) => r)
+      // .attr('x', ({ x }) => x)
+      // .attr('y', ({ y }) => y)
+      // .attr('x', (_, i) => (i % column) * spacing)
+      // .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing)
       .attr('fill', theme.colors.primary600)
       .attr('opacity', 1);
 
+    const ticked = () => {
+      a
+        .attr('x', (d) => d.x)
+        .attr('y', (d) => d.y);
+    };
+
+    simulation.nodes(enrolmentNodes)
+      .on('tick', ticked)
+      .restart();
     // svg
     //   .append('g')
     //   .attr('fill', theme.colors.accent300)
@@ -196,4 +244,4 @@ const Bar: React.FC<BarProps> = ({ nodes }) => {
   return <BarChart id='bar-chart' ref={chartRef} />;
 };
 
-export default Bar;
+export default Visualisation;

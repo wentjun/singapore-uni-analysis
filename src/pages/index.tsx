@@ -1,7 +1,7 @@
 import { styled } from 'baseui';
 import { graphql, useStaticQuery } from 'gatsby';
 import React from 'react';
-import Bar from '../components/bar';
+import Visualisation from '../components/visualisation';
 import Layout from '../components/layout';
 import SEO from '../components/seo';
 import Story from '../components/story';
@@ -40,6 +40,11 @@ const IndexPage: React.FC = () => {
     }
   `);
 
+  useScrollPosition(({ prevPos, currPos }) => {
+    console.log(prevPos);
+    console.log(currPos);
+  });
+
   const latestEnrolmentTotal = nodes.reduce((acc, { enrolment }) => {
     const courseEnrolment = Number(enrolment.replace(/,/g, ''));
     return acc + courseEnrolment;
@@ -50,7 +55,7 @@ const IndexPage: React.FC = () => {
       <SEO title='Home' />
       <IndexWrapper>
         <Story total={latestEnrolmentTotal} />
-        <Bar nodes={nodes} />
+        <Visualisation nodes={nodes} />
       </IndexWrapper>
     </Layout>
   );

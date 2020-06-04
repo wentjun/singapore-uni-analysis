@@ -6,4 +6,5 @@ export interface Enrolment {
   intake: string;
   enrolment: string;
   graduates: string;
+  id: string;
 }
