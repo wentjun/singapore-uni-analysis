@@ -251,11 +251,10 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     const scroll = scroller().container(d3.select('#bar-chart'));
     scroll();
     scroll.on('active', (index) => {
-      console.log(index);
-      d3.selectAll('.step')
-        .transition()
-        .duration(500)
-        .style('opacity', (d, i) => (i === index ? 1 : 0.1));
+      // d3.selectAll('.step')
+      //   .transition()
+      //   .duration(500)
+      //   .style('opacity', (d, i) => (i === index ? 1 : 0.1));
 
       activeIndex = index;
       const sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
@@ -267,8 +266,8 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     });
 
     scroll.on('progress', (index, progress) => {
-      // console.log(index);
-      // console.log(progress);
+      console.log(index);
+      console.log(progress);
       // if (index == 2 & progress > 0.7) {
 
       // }

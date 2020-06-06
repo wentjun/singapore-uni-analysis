@@ -56,6 +56,15 @@ const Story: React.FC<StoryProps> = ({ total }) => (
         , &amp; Design and Singapore University of Social Sciences.
       </Paragraph4>
     </Page>
+    <Page className='step'>
+      <Paragraph1>
+        Out of these
+        {' '}
+        {total}
+        {' '}
+        students,
+      </Paragraph1>
+    </Page>
   </StoryWrapper>
 );
 

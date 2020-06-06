@@ -13,11 +13,7 @@ function scroller() {
     let startPos;
 
     sections.each(function (d, i) {
-      // console.log(this);
-      // console.log(d);
-      // console.log(i);
       const { top } = this.getBoundingClientRect();
-
       if (i === 0) {
         startPos = top;
       }
@@ -26,11 +22,9 @@ function scroller() {
   }
 
   function position() {
-    const pos = window.pageYOffset - 300 - containerStart;
-    // console.log(sectionPositions);
+    const pos = window.pageYOffset - 10 - containerStart;
     let sectionIndex = d3.bisect(sectionPositions, pos);
     sectionIndex = Math.min(sections.size() - 1, sectionIndex);
-    // console.log(sectionIndex);
     if (currentIndex !== sectionIndex) {
       dispatch.call('active', this, sectionIndex);
       currentIndex = sectionIndex;
@@ -39,14 +33,7 @@ function scroller() {
     const prevIndex = Math.max(sectionIndex - 1, 0);
 
     const prevTop = sectionPositions[prevIndex];
-    console.log(pos);
-    console.log(prevTop);
-    if (currentIndex === 0) {
-
-    }
     const progress = (pos - prevTop) / (sectionPositions[sectionIndex] - prevTop);
-    // console.log(currentIndex);
-    // console.log(progress);
     dispatch.call('progress', this, currentIndex, progress);
   }
 
