@@ -6,6 +6,7 @@ import Layout from '../components/layout';
 import SEO from '../components/seo';
 import Story from '../components/story';
 import { Enrolment } from '../shared/interfaces/enrolment.interface';
+import { useScrollPosition } from '../shared/helpers/hooks';
 
 interface EnrolmentQuery {
   allEnrolmentCsv: {
@@ -41,8 +42,9 @@ const IndexPage: React.FC = () => {
   `);
 
   useScrollPosition(({ prevPos, currPos }) => {
-    console.log(prevPos);
-    console.log(currPos);
+    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    // console.log(height);
+    // console.log(currPos);
   });
 
   const latestEnrolmentTotal = nodes.reduce((acc, { enrolment }) => {

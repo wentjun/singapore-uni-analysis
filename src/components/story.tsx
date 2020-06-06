@@ -26,12 +26,12 @@ const Page = styled<PageProps, 'div', Theme>('div', ({ $justifyContent, $theme }
 
 const Story: React.FC<StoryProps> = ({ total }) => (
   <StoryWrapper>
-    <Page>
+    <Page className='step'>
       <Label1>
         An analysis of universities in Singapore
       </Label1>
     </Page>
-    <Page $justifyContent='space-between'>
+    <Page $justifyContent='space-between' className='step'>
       <Paragraph1>
         In the year of 2018, there are a total of
         {' '}

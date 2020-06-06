@@ -1,9 +1,8 @@
 import { styled, useStyletron } from 'baseui';
 import * as d3 from 'd3';
-import React, {
-  useEffect, useLayoutEffect, useRef, useState,
-} from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Enrolment } from '../shared/interfaces/enrolment.interface';
+import scroller from '../shared/helpers/scroller';
 
 interface VisualisationProps {
   nodes: Enrolment[];
@@ -37,7 +36,10 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
     const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     const margin = {
-      top: 0, right: 0, bottom: 30, left: 50,
+      top: 0,
+      right: 0,
+      bottom: 30,
+      left: 50,
     };
 
     const svg = d3
@@ -46,17 +48,17 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('viewBox', `0, 0, ${width}, ${height}`)
       .attr('class', 'bar');
 
-    const x = d3.scaleLinear()
+    const xScale = d3.scaleLinear()
       .domain([0, d3.max(nodes, ({ enrolment }) => Number(enrolment.replace(/,/g, '')) + 1000) as number])
       .range([margin.left, width - margin.right]);
 
     const xAxis = (g: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => g
       .attr('transform', `translate(0, ${height - margin.bottom})`)
-      .call(d3.axisBottom(x).ticks(width / 80))
+      .call(d3.axisBottom(xScale).ticks(width / 80))
       .call((g) => g.select('.domain').remove());
 
-    const y = d3.scaleBand()
-      .domain(nodes.map(({ course }) => course))
+    const yScale = d3.scaleBand()
+      .domain([nodes.map(({ course }) => course)])
       .rangeRound([margin.top, height - margin.bottom])
       .padding(0.1);
 
@@ -64,7 +66,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('transform', `translate(${margin.left}, 0)`)
       .attr('class', 'y-axis')
       .call(
-        d3.axisLeft(y)
+        d3.axisLeft(yScale)
           .tickFormat((i) => i)
           .tickSizeOuter(0),
       );
@@ -234,6 +236,43 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     // svg
     //   .append('g')
     //   .call(yAxis);
+    let lastIndex = 0;
+    let activeIndex = 0;
+    const activationFunctions = [
+      // draw1,
+      // draw2,
+      // draw3,
+      // draw4,
+      // draw5,
+      // draw6,
+      // draw7,
+      // draw8
+    ];
+    const scroll = scroller().container(d3.select('#bar-chart'));
+    scroll();
+    scroll.on('active', (index) => {
+      console.log(index);
+      d3.selectAll('.step')
+        .transition()
+        .duration(500)
+        .style('opacity', (d, i) => (i === index ? 1 : 0.1));
+
+      activeIndex = index;
+      const sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
+      const scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
+      scrolledSections.forEach((i) => {
+        // activationFunctions[i]();
+      });
+      lastIndex = activeIndex;
+    });
+
+    scroll.on('progress', (index, progress) => {
+      // console.log(index);
+      // console.log(progress);
+      // if (index == 2 & progress > 0.7) {
+
+      // }
+    });
   }, []);
 
   // useEffect(() => {
