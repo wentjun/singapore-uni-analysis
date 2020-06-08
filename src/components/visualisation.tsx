@@ -14,8 +14,11 @@ interface EnrolmentNode extends Enrolment{
   radius: number;
 }
 
-const BarChart = styled('div', () => ({
+const VisualisationWrapper = styled('div', () => ({
   height: '100%',
+  position: 'fixed',
+  right: 0,
+  top: 0,
   width: '75%',
 }));
 
@@ -91,7 +94,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       const myNodes = rawData.map((d) => ({
         ...d,
         radius: radiusScale(+d.enrolment.replace(/,/g, '')),
-        // size: +d.size,
         x: Math.random() * 900,
         y: Math.random() * 800,
       }));
@@ -111,8 +113,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
 
     const courseGroup = svg
       .selectAll('g')
-      // .data<Enrolment>(nodes)
-      // .data(root.children as d3.HierarchyCircularNode<Enrolment>[])
       .data(enrolmentNodes)
       .enter()
       .append('g')
@@ -139,32 +139,16 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('class', 'enrolment')
       .attr('dx', -500);
 
-    const spacing = 40;
-    const rows = 10;
-    const column = 8;
-
-    const a = courseUnit
-      // .transition()
-      // .delay((_, i) => 10 * i)
-      // .duration(500)
-      // .attr('width', 20)
+    const applyBubbles = courseUnit
       .attr('width', ({ radius }) => radius)
-      // .attr('height', 20)
       .attr('height', ({ radius }) => radius)
-      // .attr('rx', 5)
       .attr('rx', ({ radius }) => radius)
-      // .attr('ry', 5)
       .attr('ry', ({ radius }) => radius)
-      // .attr('r', ({ r }) => r)
-      // .attr('x', ({ x }) => x)
-      // .attr('y', ({ y }) => y)
-      // .attr('x', (_, i) => (i % column) * spacing)
-      // .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing)
       .attr('fill', theme.colors.primary600)
       .attr('opacity', 1);
 
     const ticked = () => {
-      a
+      applyBubbles
         .attr('x', (d) => d.x)
         .attr('y', (d) => d.y);
     };
@@ -236,10 +220,65 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     // svg
     //   .append('g')
     //   .call(yAxis);
+    const drawCouseBubbles = () => {
+      // simulation.stop();
+
+      // svg.selectAll('rect')
+      //   .attr('width', ({ radius }) => radius)
+      //   .attr('height', ({ radius }) => radius)
+      //   .attr('rx', ({ radius }) => radius)
+      //   .attr('ry', ({ radius }) => radius);
+
+      // const applyBubbles = courseUnit
+      //   .attr('width', ({ radius }) => radius)
+      //   .attr('height', ({ radius }) => radius)
+      //   .attr('rx', ({ radius }) => radius)
+      //   .attr('ry', ({ radius }) => radius)
+      //   .attr('fill', theme.colors.primary600)
+      //   .attr('opacity', 1);
+
+      // const ticked = () => {
+      //   applyBubbles
+      //     .attr('x', (d) => d.x)
+      //     .attr('y', (d) => d.y);
+      // };
+
+      // simulation.nodes(enrolmentNodes)
+      //   .on('tick', ticked)
+      //   .restart();
+    };
+
+    const drawCourseRectangles = () => {
+      const spacing = 40;
+      const rows = 10;
+      const column = 8;
+
+      simulation.stop();
+
+      svg
+        .selectAll('rect')
+        .transition()
+        .duration(500)
+        .delay((_, i) => 10 * i)
+        .attr('width', 20)
+        .attr('height', 20)
+        .attr('rx', 5)
+        .attr('ry', 5)
+        .attr('x', (_, i) => (i % column) * spacing)
+        .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing);
+    };
+
+    const drawCourseBars = () => {
+
+    };
+
     let lastIndex = 0;
     let activeIndex = 0;
+
     const activationFunctions = [
-      // draw1,
+      drawCouseBubbles,
+      drawCourseRectangles,
+      drawCourseBars,
       // draw2,
       // draw3,
       // draw4,
@@ -260,14 +299,14 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       const sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
       const scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
       scrolledSections.forEach((i) => {
-        // activationFunctions[i]();
+        activationFunctions[i - 1]();
       });
       lastIndex = activeIndex;
     });
 
     scroll.on('progress', (index, progress) => {
-      console.log(index);
-      console.log(progress);
+      // console.log(index);
+      // console.log(progress);
       // if (index == 2 & progress > 0.7) {
 
       // }
@@ -279,7 +318,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
   //   // barChart.attr('height', height);
   // }, [width, height]);
 
-  return <BarChart id='bar-chart' ref={chartRef} />;
+  return <VisualisationWrapper id='bar-chart' ref={chartRef} />;
 };
 
 export default Visualisation;

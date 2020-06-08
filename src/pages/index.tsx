@@ -16,7 +16,7 @@ interface EnrolmentQuery {
 
 const IndexWrapper = styled('div', ({
   display: 'flex',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
 }));
 
 const IndexPage: React.FC = () => {
