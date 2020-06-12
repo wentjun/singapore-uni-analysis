@@ -65,6 +65,11 @@ const Story: React.FC<StoryProps> = ({ total }) => (
         students,
       </Paragraph1>
     </Page>
+    <Page className='step'>
+      <Paragraph1>
+        Placeholder
+      </Paragraph1>
+    </Page>
   </StoryWrapper>
 );
 

@@ -44,7 +44,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       bottom: 30,
       left: 50,
     };
-
+    const maxEnrolmentCount = d3.max(nodes, ({ enrolment }) => Number(enrolment.replace(/,/g, '')) + 1000) as number;
     const svg = d3
       .select('#bar-chart')
       .append('svg')
@@ -52,27 +52,28 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('class', 'bar');
 
     const xScale = d3.scaleLinear()
-      .domain([0, d3.max(nodes, ({ enrolment }) => Number(enrolment.replace(/,/g, '')) + 1000) as number])
+      .domain([0, maxEnrolmentCount])
       .range([margin.left, width - margin.right]);
+    const xAxisScale = d3.scaleLinear()
+      .domain([0, 0]);
 
     const xAxis = (g: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => g
       .attr('transform', `translate(0, ${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).ticks(width / 80))
-      .call((g) => g.select('.domain').remove());
+      .call(d3.axisBottom(xAxisScale));
 
     const yScale = d3.scaleBand()
-      .domain([nodes.map(({ course }) => course)])
+      .domain(nodes.map(({ course }) => course))
       .rangeRound([margin.top, height - margin.bottom])
+      .padding(0.1);
+
+    const yAxisScale = d3.scaleBand()
+      .domain(nodes.map(({ course }) => course))
       .padding(0.1);
 
     const yAxis = (g: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => g
       .attr('transform', `translate(${margin.left}, 0)`)
       .attr('class', 'y-axis')
-      .call(
-        d3.axisLeft(yScale)
-          .tickFormat((i) => i)
-          .tickSizeOuter(0),
-      );
+      .call(d3.axisLeft(yAxisScale));
 
     const charge = (d) => (d.radius ** 2.0) * 0.01;
     const forceStrength = 0.03;
@@ -110,7 +111,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .force('collision', d3.forceCollide().radius((d) => d.radius + 1));
     simulation.stop();
 
-
     const courseGroup = svg
       .selectAll('g')
       .data(enrolmentNodes)
@@ -130,14 +130,14 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('class', 'city')
       .attr('dx', -500);
 
-
     // enrolment count label
     selection
       .append('text')
       .text(({ enrolment }) => enrolment)
       .attr('fill', '#fff')
       .attr('class', 'enrolment')
-      .attr('dx', -500);
+      .attr('dx', -500)
+      .attr('text-anchor', 'end');
 
     const applyBubbles = courseUnit
       .attr('width', ({ radius }) => radius)
@@ -156,70 +156,25 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     simulation.nodes(enrolmentNodes)
       .on('tick', ticked)
       .restart();
-    // svg
-    //   .append('g')
-    //   .attr('fill', theme.colors.accent300)
-    //   .selectAll('rect')
-    //   .data(nodes)
-    //   .join('g')
-    //   .attr('x', x(0))
-    //   .attr('y', ({ course }): number => y(course) as number)
-    //   .attr('width', 0) // width will initially be 0
-    //   .attr('height', y.bandwidth());
 
     /**
-     * animates bars to full width
+     * append hidden x-axis
      */
-    // svg
-    //   .selectAll('rect')
-    //   .transition()
-    //   .duration(800)
-    //   .attr('width', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))) - x(0))
-    //   .delay((_: Enrolment, i: number) => i * 100);
-
-    // svg
-    //   .append('g')
-    //   .attr('fill', theme.colors.primaryB)
-    //   .attr('text-anchor', 'end')
-    //   .attr('font-size', 12)
-    //   .attr('class', 'enrolment-count')
-    //   .selectAll('text')
-    //   .data(nodes)
-    //   .join('text')
-    //   .attr('x', x(0)) // initial x position of text
-    //   .attr('y', ({ course }) => +(y(course) ?? 0) + y.bandwidth() / 2)
-    //   .attr('dy', '0.35em')
-    //   .attr('dx', -4)
-    //   .text(({ enrolment }) => enrolment)
-    //   .call((text) => text
-    //     .filter(({ enrolment }) => x(Number(enrolment.replace(/,/g, ''))) - x(0) < 20) // short bars
-    //     .attr('dx', +4)
-    //     .attr('fill', theme.colors.primaryA)
-    //     .attr('text-anchor', 'start'));
+    svg
+      .append('g')
+      .attr('id', 'x-axis')
+      .attr('opacity', 0)
+      .call(xAxis);
 
     /**
-     * animates text to final position
+     * append hidden y-axis
      */
-    // svg
-    //   .selectAll('.enrolment-count text')
-    //   .transition()
-    //   .duration(800)
-    //   .attr('x', ({ enrolment }: Enrolment) => x(Number(enrolment.replace(/,/g, ''))))
-    //   .delay((_: Enrolment, i: number) => i * 100);
+    svg
+      .append('g')
+      .attr('id', 'y-axis')
+      .attr('opacity', 0)
+      .call(yAxis);
 
-    /**
-     * append x-axis
-     */
-    // svg
-    //   .append('g')
-    //   .call(xAxis);
-
-    /**
-     * append y-axis
-     */
-    // svg
-    //   .append('g')
-    //   .call(yAxis);
     const drawCouseBubbles = () => {
       // simulation.stop();
 
@@ -269,7 +224,65 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     };
 
     const drawCourseBars = () => {
+      xAxisScale
+        .domain([0, maxEnrolmentCount])
+        .range([margin.left, width - margin.right]);
+      svg.select('#x-axis')
+        .transition()
+        .duration(900)
+        .ease(d3.easeElastic)
+        .attr('opacity', '1')
+        .call(d3.axisBottom(xAxisScale));
 
+      yAxisScale
+        .rangeRound([margin.top, height - margin.bottom]);
+      svg.select('#y-axis')
+        .transition()
+        .duration(900)
+        .ease(d3.easeElastic)
+        .attr('opacity', '1')
+        .call(
+          d3.axisLeft(yAxisScale)
+            .tickFormat((i) => i)
+            .tickSizeOuter(0),
+        );
+
+      courseUnit
+        .attr('rx', 0)
+        .attr('ry', 0)
+        .transition()
+        .delay((_, i) => 20 * i)
+        .duration(900)
+        .ease(d3.easeElastic)
+        .attr('x', xScale(0))
+        .attr('y', ({ course }): number => yScale(course) as number)
+        .attr('width', ({ enrolment }: Enrolment) => xScale(Number(enrolment.replace(/,/g, ''))) - xScale(0))
+        .attr('height', yScale.bandwidth())
+        .attr('transform', 'translate(0,0) rotate(0)');
+
+      d3.selectAll('text.enrolment')
+        .transition()
+        .delay((_, i) => 20 * i)
+        .duration(900)
+        .ease(d3.easeElastic)
+        .attr('font-size', theme.typography.LabelMedium.fontSize)
+        .attr('x', ({ enrolment }: Enrolment) => xScale(Number(enrolment.replace(/,/g, ''))))
+        .attr('y', ({ course }) => +(yScale(course) ?? 0) + yScale.bandwidth() / 2)
+        .attr('dy', '0.35em')
+        .attr('dx', -4)
+        .call((text) => text
+          .filter(({ enrolment }) => xScale(Number(enrolment.replace(/,/g, ''))) - xScale(0) < 45) // short bars
+          .attr('dx', +4)
+          .attr('fill', theme.colors.primaryA)
+          .attr('text-anchor', 'start'));
+
+      d3.selectAll('text.course')
+        .transition()
+        .delay((_, i) => 20 * i)
+        .duration(900)
+        .ease(d3.easeElastic)
+        .attr('dx', 140)
+        .attr('dy', (_, i) => (i * 17) + 12);
     };
 
     let lastIndex = 0;
@@ -294,7 +307,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       //   .transition()
       //   .duration(500)
       //   .style('opacity', (d, i) => (i === index ? 1 : 0.1));
-
       activeIndex = index;
       const sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
       const scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
@@ -305,11 +317,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     });
 
     scroll.on('progress', (index, progress) => {
-      // console.log(index);
-      // console.log(progress);
-      // if (index == 2 & progress > 0.7) {
-
-      // }
     });
   }, []);
 
