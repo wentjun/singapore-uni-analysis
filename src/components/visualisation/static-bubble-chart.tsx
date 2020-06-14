@@ -9,12 +9,16 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
   const [, theme] = useStyletron();
 
   useEffect(() => {
+    // chart occupies 75% of vw
     const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
-    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    // minus margin top
+    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) - 20;
 
     const svg = d3
       .select('#bubble-chart')
       .append('svg')
+      .attr('width', width)
+      .attr('height', height)
       .attr('viewBox', `0, 0, ${width}, ${height}`);
 
     const charge = ({ radius }: EnrolmentNode) => (radius ** 2.0) * 0.01;

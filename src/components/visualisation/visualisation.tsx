@@ -9,7 +9,6 @@ const VisualisationWrapper = styled('div', () => ({
 }));
 
 const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
-  const chartRef = useRef(null);
   const [, theme] = useStyletron();
 
   return (

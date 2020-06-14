@@ -63,21 +63,25 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .enter()
       .append('g')
       .attr('id', ({ id }) => id);
-    const spacing = 40;
+
     const rows = 10;
     const column = 8;
-    const rectMarginTop = height / 2 - 20;
+    const spacing = (width / (column + column - 1)) * 2;
+    const rectangleWidth = spacing / 2;
+    const rectangleHeight = rectangleWidth;
 
     courseGroup
       .append('rect')
       .attr('class', 'scrolled')
       .attr('fill', theme.colors.primary600)
       .attr('x', (_, i) => (i % column) * spacing)
-      .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing + rectMarginTop)
-      .attr('width', 20)
+      .attr('y', (_, i) => (Math.floor(i / 8) % rows) * (spacing + 0.05 * height))
+      .attr('width', rectangleWidth)
       .attr('height', 0);
 
-    const selection: d3.Selection<d3.BaseType, EnrolmentNode, HTMLElement, any> = d3.selectAll('g');
+    const selection: d3.Selection<d3.BaseType, EnrolmentNode, d3.BaseType, unknown> = (
+      d3.select('#id-bubble-chart').selectAll('g')
+    );
 
     // course label
     selection
@@ -114,24 +118,57 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('opacity', 0)
       .call(yAxis);
 
-    const drawCouseBubbles = () => {
+    const hideAxisAndLabels = () => {
+      svg.selectAll('#y-axis, #x-axis, text.enrolment, text.course').attr('opacity', 0);
     };
 
-    const drawCourseRectangles = () => {
+    const resetCourseRectangles = () => {
       svg
         .selectAll('rect.scrolled')
-        .transition()
-        .duration(500)
-        .delay((_, i) => 10 * i)
-        .attr('height', 20)
+        .attr('x', (_, i) => (i % column) * spacing)
+        .attr('y', (_, i) => (Math.floor(i / 8) % rows) * (spacing + 0.05 * height))
+        .attr('width', rectangleWidth)
+        .attr('height', 0);
+    };
+
+    const drawCouseBubbles = () => {
+      hideAxisAndLabels();
+      resetCourseRectangles();
+    };
+
+    const drawCourseRectangles = (progress: number) => {
+      hideAxisAndLabels();
+      let currentRectangleHeight = rectangleHeight * progress * 2;
+
+      // stop updating once rects have reach desired height
+      if (currentRectangleHeight === rectangleHeight) {
+        return;
+      }
+
+      // reset to actual height if scroll exceeds
+      if (currentRectangleHeight > rectangleHeight) {
+        currentRectangleHeight = rectangleHeight;
+      }
+
+      svg
+        .selectAll('rect.scrolled')
+        // .transition()
+        // .duration(500)
+        // .delay((_, i) => 10 * i)
+        .attr('height', currentRectangleHeight)
+        .attr('width', rectangleWidth)
+        .attr('x', (_, i) => (i % column) * spacing)
+        .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing + (0.1 * height))
         .attr('rx', 5)
         .attr('ry', 5);
     };
 
-    const drawCourseBars = () => {
+    const drawCourseBars = (progress: number) => {
+      console.log(progress);
       xAxisScale
         .domain([0, maxEnrolmentCount])
         .range([margin.left, width - margin.right]);
+
       svg.select('#x-axis')
         .transition()
         .duration(900)
@@ -141,6 +178,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
 
       yAxisScale
         .rangeRound([margin.top, height - margin.bottom]);
+
       svg.select('#y-axis')
         .transition()
         .duration(900)
@@ -153,7 +191,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
         );
 
       d3
-        .selectAll('rect.scrolled')
+        .selectAll<d3.BaseType, EnrolmentNode>('rect.scrolled')
         .attr('rx', 0)
         .attr('ry', 0)
         .transition()
@@ -166,7 +204,8 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
         .attr('height', yScale.bandwidth())
         .attr('transform', 'translate(0,0) rotate(0)');
 
-      d3.selectAll('text.enrolment')
+      d3
+        .selectAll<d3.BaseType, EnrolmentNode>('text.enrolment')
         .transition()
         .delay((_, i) => 20 * i)
         .duration(900)
@@ -182,7 +221,8 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
           .attr('fill', theme.colors.primaryA)
           .attr('text-anchor', 'start'));
 
-      d3.selectAll('text.course')
+      d3
+        .selectAll('text.course')
         .transition()
         .delay((_, i) => 20 * i)
         .duration(900)
@@ -198,17 +238,11 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       drawCouseBubbles,
       drawCourseRectangles,
       drawCourseBars,
-      // draw2,
-      // draw3,
-      // draw4,
-      // draw5,
-      // draw6,
-      // draw7,
-      // draw8
     ];
+
     const scroll = scroller().container(d3.select('#scrolling-chart'));
     scroll();
-    scroll.on('active', (index) => {
+    scroll.on('active', (index: number) => {
       // d3.selectAll('.step')
       //   .transition()
       //   .duration(500)
@@ -217,12 +251,21 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       const sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
       const scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
       scrolledSections.forEach((i) => {
-        activationFunctions[i - 1]();
+        // activationFunctions[i - 1]();
       });
       lastIndex = activeIndex;
     });
 
-    scroll.on('progress', (index, progress) => {
+    scroll.on('progress', (index: number, progress: number) => {
+    });
+
+    scroll.on('triggerNext', (index: number, progress: number) => {
+      if (index === 1) {
+        activationFunctions[1](progress);
+      }
+      if (index === 2) {
+        activationFunctions[2](progress);
+      }
     });
   }, []);
 

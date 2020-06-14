@@ -20,7 +20,7 @@ const Page = styled<PageProps, 'div', Theme>('div', ({ $justifyContent, $theme }
   flexDirection: 'column',
   height: `calc(100vh - 2 * ${$theme.sizing.scale700})`,
   justifyContent: $justifyContent || 'flex-start',
-  padding: `${$theme.sizing.scale700} 0`,
+  padding: `${$theme.sizing.scale700} 0 0 0`,
   width: '100%',
 }));
 
