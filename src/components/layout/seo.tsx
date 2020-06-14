@@ -1,7 +1,7 @@
 import { graphql, useStaticQuery } from 'gatsby';
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { SEOProps, SEOQuery } from '../shared/interfaces/meta.interface';
+import { SEOProps, SEOQuery } from '../../shared/interfaces/meta.interface';
 
 const SEO: React.FC<SEOProps> = ({
   description,

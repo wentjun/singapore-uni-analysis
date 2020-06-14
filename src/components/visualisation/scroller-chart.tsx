@@ -1,39 +1,19 @@
 import { styled, useStyletron } from 'baseui';
 import * as d3 from 'd3';
 import React, { useEffect, useRef } from 'react';
-import { Enrolment } from '../shared/interfaces/enrolment.interface';
-import scroller from '../shared/helpers/scroller';
+import scroller from '../../shared/helpers/scroller';
+import { VisualisationProps } from '../../shared/interfaces/components.interface';
+import { Enrolment, EnrolmentNode } from '../../shared/interfaces/enrolment.interface';
 
-interface VisualisationProps {
-  nodes: Enrolment[];
-}
-
-interface EnrolmentNode extends Enrolment{
-  x: number;
-  y: number;
-  radius: number;
-}
-
-const VisualisationWrapper = styled('div', () => ({
-  height: '100%',
-  position: 'fixed',
-  right: 0,
+const ScrollerChartWrapper = styled('div', () => ({
+  position: 'sticky',
   top: 0,
-  width: '75%',
+  right: 0,
 }));
 
-const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
+const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
   const chartRef = useRef(null);
   const [, theme] = useStyletron();
-  // const [width, height] = useWindowSize()
-
-  // d3.select(window)
-  //   .on('resize', () => {
-  //     const targetWidth = d3.select('#bar-chart').node().getBoundingClientRect().width;
-  //     // chart.attr('width', targetWidth);
-  //     // chart.attr('height', targetWidth / aspect);
-  //     console.log(targetWidth);
-  //   });
 
   useEffect(() => {
     const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
@@ -46,15 +26,18 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     };
     const maxEnrolmentCount = d3.max(nodes, ({ enrolment }) => Number(enrolment.replace(/,/g, '')) + 1000) as number;
     const svg = d3
-      .select('#bar-chart')
+      .select('#scrolling-chart')
       .append('svg')
       .attr('viewBox', `0, 0, ${width}, ${height}`)
       .attr('class', 'bar');
 
-    const xScale = d3.scaleLinear()
+    const xScale = d3
+      .scaleLinear()
       .domain([0, maxEnrolmentCount])
       .range([margin.left, width - margin.right]);
-    const xAxisScale = d3.scaleLinear()
+
+    const xAxisScale = d3
+      .scaleLinear()
       .domain([0, 0]);
 
     const xAxis = (g: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => g
@@ -75,51 +58,16 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('class', 'y-axis')
       .call(d3.axisLeft(yAxisScale));
 
-    const charge = (d) => (d.radius ** 2.0) * 0.01;
-    const forceStrength = 0.03;
-    const centre = { x: width / 2, y: height / 2 };
-
-    const createNodes = (rawData: Enrolment[]) => {
-      // use max size in the data as the max in the scale's domain
-      // note we have to ensure that size is a number
-      const maxSize = d3.max(rawData, ({ enrolment }) => +enrolment.replace(/,/g, ''));
-      if (!maxSize) {
-        return [];
-      }
-      // size bubbles based on area
-      const radiusScale = d3.scaleSqrt()
-        .domain([0, maxSize])
-        .range([0, 80]);
-
-      // use map() to convert raw data into node data
-      const myNodes = rawData.map((d) => ({
-        ...d,
-        radius: radiusScale(+d.enrolment.replace(/,/g, '')),
-        x: Math.random() * 900,
-        y: Math.random() * 800,
-      }));
-
-      return myNodes;
-    };
-    const enrolmentNodes = createNodes(nodes);
-
-    const simulation = d3.forceSimulation()
-      .force('charge', d3.forceManyBody().strength(charge))
-      // .force('center', d3.forceCenter(centre.x, centre.y))
-      .force('x', d3.forceX().strength(forceStrength).x(centre.x))
-      .force('y', d3.forceY().strength(forceStrength).y(centre.y))
-      .force('collision', d3.forceCollide().radius((d) => d.radius + 1));
-    simulation.stop();
-
     const courseGroup = svg
       .selectAll('g')
-      .data(enrolmentNodes)
+      .data(nodes)
       .enter()
       .append('g')
       .attr('id', ({ id }) => id);
 
-    const courseUnit = courseGroup.append('rect');
-
+    courseGroup
+      .append('rect')
+      .attr('fill', theme.colors.primary600);
     const selection: d3.Selection<d3.BaseType, EnrolmentNode, HTMLElement, any> = d3.selectAll('g');
 
     // course label
@@ -138,24 +86,6 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('class', 'enrolment')
       .attr('dx', -500)
       .attr('text-anchor', 'end');
-
-    const applyBubbles = courseUnit
-      .attr('width', ({ radius }) => radius)
-      .attr('height', ({ radius }) => radius)
-      .attr('rx', ({ radius }) => radius)
-      .attr('ry', ({ radius }) => radius)
-      .attr('fill', theme.colors.primary600)
-      .attr('opacity', 1);
-
-    const ticked = () => {
-      applyBubbles
-        .attr('x', (d) => d.x)
-        .attr('y', (d) => d.y);
-    };
-
-    simulation.nodes(enrolmentNodes)
-      .on('tick', ticked)
-      .restart();
 
     /**
      * append hidden x-axis
@@ -176,39 +106,12 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       .call(yAxis);
 
     const drawCouseBubbles = () => {
-      // simulation.stop();
-
-      // svg.selectAll('rect')
-      //   .attr('width', ({ radius }) => radius)
-      //   .attr('height', ({ radius }) => radius)
-      //   .attr('rx', ({ radius }) => radius)
-      //   .attr('ry', ({ radius }) => radius);
-
-      // const applyBubbles = courseUnit
-      //   .attr('width', ({ radius }) => radius)
-      //   .attr('height', ({ radius }) => radius)
-      //   .attr('rx', ({ radius }) => radius)
-      //   .attr('ry', ({ radius }) => radius)
-      //   .attr('fill', theme.colors.primary600)
-      //   .attr('opacity', 1);
-
-      // const ticked = () => {
-      //   applyBubbles
-      //     .attr('x', (d) => d.x)
-      //     .attr('y', (d) => d.y);
-      // };
-
-      // simulation.nodes(enrolmentNodes)
-      //   .on('tick', ticked)
-      //   .restart();
     };
 
     const drawCourseRectangles = () => {
       const spacing = 40;
       const rows = 10;
       const column = 8;
-
-      simulation.stop();
 
       svg
         .selectAll('rect')
@@ -247,7 +150,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
             .tickSizeOuter(0),
         );
 
-      courseUnit
+      d3.selectAll('rect')
         .attr('rx', 0)
         .attr('ry', 0)
         .transition()
@@ -300,7 +203,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
       // draw7,
       // draw8
     ];
-    const scroll = scroller().container(d3.select('#bar-chart'));
+    const scroll = scroller().container(d3.select('#scrolling-chart'));
     scroll();
     scroll.on('active', (index) => {
       // d3.selectAll('.step')
@@ -320,12 +223,7 @@ const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
     });
   }, []);
 
-  // useEffect(() => {
-  //   // barChart.attr('width', width * 0.75);
-  //   // barChart.attr('height', height);
-  // }, [width, height]);
-
-  return <VisualisationWrapper id='bar-chart' ref={chartRef} />;
+  return <ScrollerChartWrapper id='scrolling-chart' ref={chartRef} />;
 };
 
-export default Visualisation;
+export default ScrollerChart;

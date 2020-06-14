@@ -1,4 +1,3 @@
-
 export interface Enrolment {
   year: string;
   sex: string;
@@ -7,4 +6,10 @@ export interface Enrolment {
   enrolment: string;
   graduates: string;
   id: string;
+}
+
+export interface EnrolmentNode extends Enrolment{
+  x: number;
+  y: number;
+  radius: number;
 }

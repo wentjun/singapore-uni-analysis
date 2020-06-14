@@ -1,12 +1,11 @@
 import { styled } from 'baseui';
 import { graphql, useStaticQuery } from 'gatsby';
 import React from 'react';
-import Visualisation from '../components/visualisation';
-import Layout from '../components/layout';
-import SEO from '../components/seo';
+import Layout from '../components/layout/layout';
+import SEO from '../components/layout/seo';
 import Story from '../components/story';
+import Visualisation from '../components/visualisation/visualisation';
 import { Enrolment } from '../shared/interfaces/enrolment.interface';
-import { useScrollPosition } from '../shared/helpers/hooks';
 
 interface EnrolmentQuery {
   allEnrolmentCsv: {
@@ -40,12 +39,6 @@ const IndexPage: React.FC = () => {
       }
     }
   `);
-
-  useScrollPosition(({ prevPos, currPos }) => {
-    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-    // console.log(height);
-    // console.log(currPos);
-  });
 
   const latestEnrolmentTotal = nodes.reduce((acc, { enrolment }) => {
     const courseEnrolment = Number(enrolment.replace(/,/g, ''));
