@@ -15,10 +15,9 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
     const svg = d3
       .select('#bubble-chart')
       .append('svg')
-      .attr('viewBox', `0, 0, ${width}, ${height}`)
-      .attr('class', 'bar');
+      .attr('viewBox', `0, 0, ${width}, ${height}`);
 
-    const charge = (d) => (d.radius ** 2.0) * 0.01;
+    const charge = ({ radius }: EnrolmentNode) => (radius ** 2.0) * 0.01;
     const forceStrength = 0.03;
     const centre = { x: width / 2, y: height / 2 };
 
@@ -29,12 +28,11 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
       if (!maxSize) {
         return [];
       }
-      // size bubbles based on area
+      // bubbles based on area size
       const radiusScale = d3.scaleSqrt()
         .domain([0, maxSize])
         .range([0, 80]);
 
-      // use map() to convert raw data into node data
       const myNodes = rawData.map((d) => ({
         ...d,
         radius: radiusScale(+d.enrolment.replace(/,/g, '')),
@@ -47,11 +45,10 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
     const enrolmentNodes = createNodes(nodes);
 
     const simulation = d3.forceSimulation()
-      .force('charge', d3.forceManyBody().strength(charge))
-      // .force('center', d3.forceCenter(centre.x, centre.y))
+      .force('charge', d3.forceManyBody<EnrolmentNode>().strength(charge))
       .force('x', d3.forceX().strength(forceStrength).x(centre.x))
       .force('y', d3.forceY().strength(forceStrength).y(centre.y))
-      .force('collision', d3.forceCollide().radius((d) => d.radius + 1));
+      .force('collision', d3.forceCollide<EnrolmentNode>().radius(({ radius }) => radius + 1));
     simulation.stop();
 
     const courseGroup = svg
@@ -61,45 +58,23 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .append('g')
       .attr('id', ({ id }) => id);
 
-    const courseUnit = courseGroup.append('rect');
-
-    const selection: d3.Selection<d3.BaseType, EnrolmentNode, HTMLElement, any> = d3.selectAll('g');
-
-    // course label
-    selection
-      .append('text')
-      .text(({ course }) => course)
-      .attr('fill', 'gray')
-      .attr('class', 'city')
-      .attr('dx', -500);
-
-    // enrolment count label
-    selection
-      .append('text')
-      .text(({ enrolment }) => enrolment)
-      .attr('fill', '#fff')
-      .attr('class', 'enrolment')
-      .attr('dx', -500)
-      .attr('text-anchor', 'end');
+    const courseUnit = courseGroup.append('circle');
 
     const applyBubbles = courseUnit
-      .attr('width', ({ radius }) => radius)
-      .attr('height', ({ radius }) => radius)
-      .attr('rx', ({ radius }) => radius)
-      .attr('ry', ({ radius }) => radius)
+      .attr('r', ({ radius }) => radius)
       .attr('fill', theme.colors.primary600)
       .attr('opacity', 1);
 
     const ticked = () => {
       applyBubbles
-        .attr('x', (d) => d.x)
-        .attr('y', (d) => d.y);
+        .attr('cx', (d) => d.x)
+        .attr('cy', (d) => d.y);
     };
 
     simulation.nodes(enrolmentNodes)
       .on('tick', ticked)
       .restart();
-  }, []);
+  }, [nodes, theme.colors.primary600]);
 
   return <div id='bubble-chart' ref={bubbleChartRef} />;
 };

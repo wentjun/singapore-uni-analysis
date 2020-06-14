@@ -28,8 +28,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
     const svg = d3
       .select('#scrolling-chart')
       .append('svg')
-      .attr('viewBox', `0, 0, ${width}, ${height}`)
-      .attr('class', 'bar');
+      .attr('viewBox', `0, 0, ${width}, ${height}`);
 
     const xScale = d3
       .scaleLinear()
@@ -64,10 +63,20 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .enter()
       .append('g')
       .attr('id', ({ id }) => id);
+    const spacing = 40;
+    const rows = 10;
+    const column = 8;
+    const rectMarginTop = height / 2 - 20;
 
     courseGroup
       .append('rect')
-      .attr('fill', theme.colors.primary600);
+      .attr('class', 'scrolled')
+      .attr('fill', theme.colors.primary600)
+      .attr('x', (_, i) => (i % column) * spacing)
+      .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing + rectMarginTop)
+      .attr('width', 20)
+      .attr('height', 0);
+
     const selection: d3.Selection<d3.BaseType, EnrolmentNode, HTMLElement, any> = d3.selectAll('g');
 
     // course label
@@ -109,21 +118,14 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
     };
 
     const drawCourseRectangles = () => {
-      const spacing = 40;
-      const rows = 10;
-      const column = 8;
-
       svg
-        .selectAll('rect')
+        .selectAll('rect.scrolled')
         .transition()
         .duration(500)
         .delay((_, i) => 10 * i)
-        .attr('width', 20)
         .attr('height', 20)
         .attr('rx', 5)
-        .attr('ry', 5)
-        .attr('x', (_, i) => (i % column) * spacing)
-        .attr('y', (_, i) => (Math.floor(i / 8) % rows) * spacing);
+        .attr('ry', 5);
     };
 
     const drawCourseBars = () => {
@@ -150,7 +152,8 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
             .tickSizeOuter(0),
         );
 
-      d3.selectAll('rect')
+      d3
+        .selectAll('rect.scrolled')
         .attr('rx', 0)
         .attr('ry', 0)
         .transition()
