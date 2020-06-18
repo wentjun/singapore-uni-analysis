@@ -5,7 +5,8 @@ import scroller from '../../shared/helpers/scroller';
 import { VisualisationProps } from '../../shared/interfaces/components.interface';
 import { Enrolment, EnrolmentNode } from '../../shared/interfaces/enrolment.interface';
 
-const ScrollerChartWrapper = styled('div', () => ({
+const ScrollerChartWrapper = styled('div', ({ $theme }) => ({
+  paddingTop: $theme.sizing.scale700,
   position: 'sticky',
   top: 0,
   right: 0,
@@ -16,7 +17,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
   const [, theme] = useStyletron();
 
   useEffect(() => {
-    const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
+    const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75 - 20;
     const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     const margin = {
       top: 0,
@@ -80,7 +81,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .attr('height', 0);
 
     const selection: d3.Selection<d3.BaseType, EnrolmentNode, d3.BaseType, unknown> = (
-      d3.select('#id-bubble-chart').selectAll('g')
+      d3.select('#scrolling-chart').selectAll('g')
     );
 
     // course label
@@ -119,6 +120,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .call(yAxis);
 
     const hideAxisAndLabels = () => {
+      svg.selectAll('text.enrolment, text.course').attr('dx', -500);
       svg.selectAll('#y-axis, #x-axis, text.enrolment, text.course').attr('opacity', 0);
     };
 
@@ -137,7 +139,6 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
     };
 
     const drawCourseRectangles = (progress: number) => {
-      hideAxisAndLabels();
       let currentRectangleHeight = rectangleHeight * progress * 2;
 
       // stop updating once rects have reach desired height
@@ -152,9 +153,6 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
 
       svg
         .selectAll('rect.scrolled')
-        // .transition()
-        // .duration(500)
-        // .delay((_, i) => 10 * i)
         .attr('height', currentRectangleHeight)
         .attr('width', rectangleWidth)
         .attr('x', (_, i) => (i % column) * spacing)
@@ -163,15 +161,64 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
         .attr('ry', 5);
     };
 
-    const drawCourseBars = (progress: number) => {
-      console.log(progress);
+    const drawBarChart = (percentage: number) => {
+      d3
+        .selectAll<d3.BaseType, EnrolmentNode>('rect.scrolled')
+        .attr('rx', () => {
+          const currentRX = 5;
+          const unitChange = currentRX * percentage;
+          return (currentRX - unitChange);
+        })
+        .attr('ry', () => {
+          const currentRY = 5;
+          const unitChange = currentRY * percentage;
+          return (currentRY - unitChange);
+        })
+        .attr('x', (_, i) => {
+          const currentX = (i % column) * spacing;
+          const unitChange = (currentX - (xScale(0))) * percentage;
+          return (currentX - unitChange);
+        })
+        .attr('y', ({ course }, i) => {
+          const currentY = (Math.floor(i / 8) % rows) * spacing + (0.1 * height);
+          const unitChange = ((yScale(course) as number - currentY)) * percentage;
+          return (currentY + unitChange);
+        })
+        .attr('width', ({ enrolment }) => {
+          const currentWidth = rectangleWidth;
+          const targetWidth = xScale(Number(enrolment.replace(/,/g, ''))) - xScale(0);
+          const unitChange = ((targetWidth - currentWidth)) * percentage;
+          return (currentWidth + unitChange);
+        })
+        .attr('height', () => {
+          const currentHeight = rectangleHeight;
+          const targetHeight = yScale.bandwidth();
+          const unitChange = ((targetHeight - currentHeight)) * percentage;
+          return (currentHeight + unitChange);
+        });
+    };
+
+    const transitionToBarChart = (progress: number, start: number) => {
+      const transitionEnd = 0.8;
+
+      if (progress > transitionEnd) {
+        drawBarChart(1);
+        return;
+      }
+      const transitionProgressDuration = transitionEnd - start;
+      const percentage = (progress - start) / transitionProgressDuration;
+
+      drawBarChart(percentage);
+    };
+
+    const drawBarChartElements = () => {
       xAxisScale
         .domain([0, maxEnrolmentCount])
         .range([margin.left, width - margin.right]);
 
       svg.select('#x-axis')
         .transition()
-        .duration(900)
+        .duration(2000)
         .ease(d3.easeElastic)
         .attr('opacity', '1')
         .call(d3.axisBottom(xAxisScale));
@@ -181,7 +228,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
 
       svg.select('#y-axis')
         .transition()
-        .duration(900)
+        .duration(2000)
         .ease(d3.easeElastic)
         .attr('opacity', '1')
         .call(
@@ -191,30 +238,17 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
         );
 
       d3
-        .selectAll<d3.BaseType, EnrolmentNode>('rect.scrolled')
-        .attr('rx', 0)
-        .attr('ry', 0)
-        .transition()
-        .delay((_, i) => 20 * i)
-        .duration(900)
-        .ease(d3.easeElastic)
-        .attr('x', xScale(0))
-        .attr('y', ({ course }): number => yScale(course) as number)
-        .attr('width', ({ enrolment }: Enrolment) => xScale(Number(enrolment.replace(/,/g, ''))) - xScale(0))
-        .attr('height', yScale.bandwidth())
-        .attr('transform', 'translate(0,0) rotate(0)');
-
-      d3
         .selectAll<d3.BaseType, EnrolmentNode>('text.enrolment')
         .transition()
         .delay((_, i) => 20 * i)
-        .duration(900)
+        .duration(2000)
         .ease(d3.easeElastic)
         .attr('font-size', theme.typography.LabelMedium.fontSize)
         .attr('x', ({ enrolment }: Enrolment) => xScale(Number(enrolment.replace(/,/g, ''))))
         .attr('y', ({ course }) => +(yScale(course) ?? 0) + yScale.bandwidth() / 2)
         .attr('dy', '0.35em')
         .attr('dx', -4)
+        .attr('opacity', '1')
         .call((text) => text
           .filter(({ enrolment }) => xScale(Number(enrolment.replace(/,/g, ''))) - xScale(0) < 45) // short bars
           .attr('dx', +4)
@@ -225,7 +259,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
         .selectAll('text.course')
         .transition()
         .delay((_, i) => 20 * i)
-        .duration(900)
+        .duration(2000)
         .ease(d3.easeElastic)
         .attr('dx', 140)
         .attr('dy', (_, i) => (i * 17) + 12);
@@ -237,7 +271,7 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
     const activationFunctions = [
       drawCouseBubbles,
       drawCourseRectangles,
-      drawCourseBars,
+      drawBarChartElements,
     ];
 
     const scroll = scroller().container(d3.select('#scrolling-chart'));
@@ -257,16 +291,42 @@ const ScrollerChart: React.FC<VisualisationProps> = ({ nodes }) => {
     });
 
     scroll.on('progress', (index: number, progress: number) => {
-    });
-
-    scroll.on('triggerNext', (index: number, progress: number) => {
       if (index === 1) {
-        activationFunctions[1](progress);
+        if (progress > 0.2) {
+          activationFunctions[1](progress);
+        }
+        hideAxisAndLabels();
       }
       if (index === 2) {
-        activationFunctions[2](progress);
+        const transitionToBarChartStart = 0.3;
+        if (progress > transitionToBarChartStart) {
+          transitionToBarChart(progress, transitionToBarChartStart);
+        }
+        if (progress < 0.8) {
+          hideAxisAndLabels();
+        }
+        if (progress > 0.8) {
+          activationFunctions[2](progress);
+        }
+      }
+      if (index === 3) {
+        if (progress > 0) {
+          transitionToBarChart(1, 0.3);
+        }
       }
     });
+
+    // scroll.on('triggerNext', (index: number, progress: number) => {
+    //   if (index === 1) {
+    //     activationFunctions[1](progress);
+    //     if (progress > 0.5) {
+    //       transitionToBarChart();
+    //     }
+    //   }
+    //   if (index === 2) {
+    //     activationFunctions[2](progress);
+    //   }
+    // });
   }, []);
 
   return <ScrollerChartWrapper id='scrolling-chart' ref={chartRef} />;

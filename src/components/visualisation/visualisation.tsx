@@ -1,20 +1,21 @@
-import { styled, useStyletron } from 'baseui';
-import React, { useRef } from 'react';
+import { styled } from 'baseui';
+import React from 'react';
 import { VisualisationProps } from '../../shared/interfaces/components.interface';
 import ScrollerChart from './scroller-chart';
 import StaticBubbleChart from './static-bubble-chart';
 
-const VisualisationWrapper = styled('div', () => ({
+const VisualisationWrapper = styled('div', ({ $theme }) => ({
+  paddingTop: $theme.sizing.scale700,
   width: '75%',
 }));
 
 const Visualisation: React.FC<VisualisationProps> = ({ nodes }) => {
-  const [, theme] = useStyletron();
+  const sortedNodes = nodes.sort((a, b) => +b.enrolment.replace(/,/g, '') - +a.enrolment.replace(/,/g, ''));
 
   return (
     <VisualisationWrapper>
       <StaticBubbleChart nodes={nodes} />
-      <ScrollerChart nodes={nodes} />
+      <ScrollerChart nodes={sortedNodes} />
     </VisualisationWrapper>
   );
 };

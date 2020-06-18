@@ -1,8 +1,13 @@
-import { useStyletron } from 'baseui';
+import { styled, useStyletron } from 'baseui';
 import * as d3 from 'd3';
 import React, { useEffect, useRef } from 'react';
 import { VisualisationProps } from '../../shared/interfaces/components.interface';
 import { Enrolment, EnrolmentNode } from '../../shared/interfaces/enrolment.interface';
+
+const BubbleChartWrapper = styled('div', ({ $theme }) => ({
+  height: `calc(100vh - 2 * ${$theme.sizing.scale700})`,
+  width: '100%',
+}));
 
 const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
   const bubbleChartRef = useRef(null);
@@ -10,9 +15,9 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
 
   useEffect(() => {
     // chart occupies 75% of vw
-    const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75;
+    const width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) * 0.75 - 20;
     // minus margin top
-    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) - 20;
+    const height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) - 40;
 
     const svg = d3
       .select('#bubble-chart')
@@ -80,7 +85,7 @@ const StaticBubbleChart: React.FC<VisualisationProps> = ({ nodes }) => {
       .restart();
   }, [nodes, theme.colors.primary600]);
 
-  return <div id='bubble-chart' ref={bubbleChartRef} />;
+  return <BubbleChartWrapper id='bubble-chart' ref={bubbleChartRef} />;
 };
 
 export default StaticBubbleChart;

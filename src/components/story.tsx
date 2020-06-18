@@ -18,7 +18,7 @@ const StoryWrapper = styled('div', ({
 const Page = styled<PageProps, 'div', Theme>('div', ({ $justifyContent, $theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  height: `calc(100vh - 2 * ${$theme.sizing.scale700})`,
+  height: `calc(100vh - ${$theme.sizing.scale700})`,
   justifyContent: $justifyContent || 'flex-start',
   padding: `${$theme.sizing.scale700} 0 0 0`,
   width: '100%',
